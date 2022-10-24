@@ -1,5 +1,6 @@
 #pragma once
 #include "SceneBase.h"
+#include "Map.h"
 
 class SceneTest : public SceneBase
 {
@@ -18,4 +19,6 @@ public:
 
 private:
 	
+	Map m_map;
+
 };
