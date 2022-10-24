@@ -26,6 +26,10 @@ private:
 	int chipNumY();
 	int chipNum();
 
+	//マップデータの入出力
+	void outPutData();			//マップのデータを出力する
+	void readPutData();			//マップのデータを読み込む
+
 private:
 	//グラフィックデータのハンドル
 	int m_handle;
