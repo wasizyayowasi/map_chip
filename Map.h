@@ -28,7 +28,7 @@ private:
 
 	//マップデータの入出力
 	void outPutData();			//マップのデータを出力する
-	void readPutData();			//マップのデータを読み込む
+	void readData();			//マップのデータを読み込む
 
 private:
 	//グラフィックデータのハンドル
