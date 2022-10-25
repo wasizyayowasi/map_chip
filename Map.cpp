@@ -17,24 +17,6 @@ namespace {
 	//入出力ファイル名
 	const char* const kFileName = "bin/map.bin";
 
-	//
-	constexpr int kMapData[kBgNumY][kBgNumX] = {
-		{0,1,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-	};
 }
 
 Map::Map() :
@@ -42,7 +24,9 @@ Map::Map() :
 	m_graphWidth(0),
 	m_graphHeight(0),
 	m_cursorNo(0),
-	m_mapData(kBgNumX * kBgNumY, 0)
+	m_mapData(kBgNumX * kBgNumY, 0),
+	m_scrollX(0),
+	m_scrollY(0)
 {
 }
 
@@ -82,41 +66,66 @@ void Map::update() {
 		readData();
 	}
 
-	if (Pad::isTrigger(PAD_INPUT_UP)) {
-		if (indexY > 0) {
-			m_cursorNo -= kBgNumX;
+	if (Pad::isPress(PAD_INPUT_UP)) {
+		m_scrollY += 8;
+		if (m_scrollY > Game::kScreenHeight) {
+			m_scrollY -= Game::kScreenHeight;
 		}
 	}
-	if (Pad::isTrigger(PAD_INPUT_DOWN)) {
-		if (indexY < (kBgNumY - 1)) {
-			m_cursorNo += kBgNumX;
+	if (Pad::isPress(PAD_INPUT_DOWN)) {
+		m_scrollY -= 8;
+		if (m_scrollY < -Game::kScreenHeight) {
+			m_scrollY += Game::kScreenHeight;
 		}
 	}
-	if (Pad::isTrigger(PAD_INPUT_LEFT)) {
-		if (indexX > 0) {
-			m_cursorNo--;
+	if (Pad::isPress(PAD_INPUT_LEFT)) {
+		m_scrollX += 8;
+		if (m_scrollX > Game::kScreenWidth) {
+			m_scrollX -= Game::kScreenWidth;
 		}
 	}
-	if (Pad::isTrigger(PAD_INPUT_RIGHT)) {
-		if (indexX < (kBgNumX - 1)){
-			m_cursorNo++;
+	if (Pad::isPress(PAD_INPUT_RIGHT)) {
+		m_scrollX -= 8;
+		if (m_scrollX < -Game::kScreenWidth) {
+			m_scrollX += Game::kScreenWidth;
 		}
 	}
 }
 
 void Map::draw() {
+
+	//m_scrollX > 0 右にずれている
+	//m_scrollX < 0 左にずれている
+	//m_scrollY > 0 下にずれている
+	//m_scrollY < 0 上にずれている
+	int offsetX = m_scrollX;
+	if (offsetX > 0) offsetX -= Game::kScreenWidth;
+	int offsetY = m_scrollY;
+	if (offsetY > 0) offsetY -= Game::kScreenHeight;
+	
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			drawMap(offsetX + x * Game::kScreenWidth, offsetY + y * Game::kScreenHeight);
+		}
+	}
+
+	drawCursor();
+}
+
+void Map::drawMap(int offsetX, int offsetY) {
 	for (int x = 0; x < kBgNumX; x++) {
 		for (int y = 0; y < kBgNumY; y++) {
-			const int chipNo = m_mapData[ y * kBgNumX + x ];
+			const int chipNo = m_mapData[y * kBgNumX + x];
 			assert(chipNo >= 0);
 			assert(chipNo < chipNum());
 			int graphX = (chipNo % chipNumX()) * kChipSize;
 			int graphY = (chipNo / chipNumX()) * kChipSize;
 
-			DrawRectGraph(x * kChipSize, y * kChipSize, graphX, graphY, kChipSize, kChipSize, m_handle, true, false);
+			DrawRectGraph(x * kChipSize + offsetX, y * kChipSize + offsetY,
+				graphX, graphY, kChipSize, kChipSize,
+				m_handle, true, false);
 		}
 	}
-	drawCursor();
 }
 
 void Map::drawCursor() {
